@@ -2,18 +2,26 @@
 import React from 'react';
 
 // React-Native
-import {
-  SafeAreaView,
-} from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+//React-Query
+import { QueryClient, QueryClientProvider } from 'react-query';
 
 // Components
-import LoginPage from './components/LoginPage/LoginPage';
+import NavigationStack from './components/NavigationStack';
+
+const Stack = createNativeStackNavigator();
 
 const App = () => {
+  const queryClient = new QueryClient()
+  
   return (
-    <SafeAreaView>
-      <LoginPage />
-    </SafeAreaView>
+    <QueryClientProvider client={queryClient}>
+      <NavigationContainer>
+        <NavigationStack />
+      </NavigationContainer>
+    </QueryClientProvider>
   );
 };
 export default App;

@@ -8,23 +8,47 @@ import {
  Text,
  Image,
 } from 'react-native';
+import Snackbar from 'react-native-snackbar';
+
+// Services
+import { AuthenticationService } from '../../services/authentication.service';
 
 //Components
 import InputTextbox from './reusable/InputTextbox';
 import SubmitButton from './reusable/SubmitButton';
 
 // Images
-var SkiPowerLogo = require ('../images/logo.png');
+var SkiPowerLogo = require ('../../images/logo.png');
 
 interface CreateAccountProps {
 	setView: (view: string) => void,
+  setToken: (token: string) => void,
 }
 
-const CreateAccount = ({setView}: CreateAccountProps) => {
+const CreateAccount = ({setView, setToken}: CreateAccountProps) => {
 	const [firstname, setFirstname] = useState('');
 	const [lastname, setLastname] = useState('');
 	const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const createaccount = () => {
+    const services = new AuthenticationService()
+    services.createAccount(firstname, lastname, email, password).then((res) => {
+      if (!res["success"]){
+        Snackbar.show({
+          text: res["error"] || 'Error',
+          duration: Snackbar.LENGTH_LONG,
+          backgroundColor: '#FF0000',
+        })
+      } else {
+        // Save user token here
+        if (res.data.token) {
+          AuthenticationService.saveToken(res.data.token);
+          setToken(res.data.token);
+        }
+      }
+    });
+  }
 
 	return (
 		<View style={styles.view}>
@@ -33,7 +57,7 @@ const CreateAccount = ({setView}: CreateAccountProps) => {
       <InputTextbox value={lastname} placeholder='Lastname' onChange={setLastname}/>
       <InputTextbox value={email} placeholder='Email' onChange={setEmail}/>
       <InputTextbox value={password} placeholder='Password' onChange={setPassword}/>
-      <SubmitButton text='Register' buttonClicked={() => console.log("registered")}/>
+      <SubmitButton text='Register' buttonClicked={() => createaccount()}/>
 			<Text style={styles.haveAnAccountText} onPress={() => setView('signin')}>Already have an account?</Text>
 		</View>
 	);

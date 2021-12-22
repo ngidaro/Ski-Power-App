@@ -8,12 +8,16 @@ import { View } from 'react-native';
 import CreateAccount from './CreateAccount';
 import SignIn from './SignIn';
 
-const LoginPage = () => {
+interface LoginPageProps {
+  setToken: (token: string) => void,
+}
+
+const LoginPage = ({setToken}: LoginPageProps) => {
   const [view, setView] = useState('signin')
 
   const components: any = {
-    'signin': <SignIn setView={setView} />,
-    'createaccount' : <CreateAccount setView={setView} />,
+    'signin': <SignIn setView={setView} setToken={setToken} />,
+    'createaccount' : <CreateAccount setView={setView} setToken={setToken} />,
   }
 
   return (

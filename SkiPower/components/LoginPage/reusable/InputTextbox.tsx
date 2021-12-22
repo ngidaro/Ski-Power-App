@@ -19,7 +19,8 @@ const InputTextbox = ({ value, placeholder, onChange }: InputTextboxProps) => {
         style={styles.input}
         onChangeText={onChange}
         value={value}
-        placeholder={placeholder}/>
+        placeholder={placeholder}
+        autoCapitalize='none'/>
   );
 };
 

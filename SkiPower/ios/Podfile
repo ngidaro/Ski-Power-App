@@ -12,6 +12,10 @@ target 'SkiPower' do
     :hermes_enabled => false
   )
 
+  pod 'RNSnackbar', :path => '../node_modules/react-native-snackbar'
+  
+  pod 'RNVectorIcons', :path => '../node_modules/react-native-vector-icons'
+
   target 'SkiPowerTests' do
     inherit! :complete
     # Pods for testing
