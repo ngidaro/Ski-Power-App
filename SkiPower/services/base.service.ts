@@ -3,7 +3,8 @@ import { ApiResult } from './api-result';
 
 export abstract class BaseService {
 
-    public static serverURl: string = 'http://localhost:3333';
+    // public static serverURl: string = 'http://localhost:3333';
+    public static serverURl: string = 'http://10.0.0.233:3333';
     protected client: AxiosInstance;
 
     constructor() {

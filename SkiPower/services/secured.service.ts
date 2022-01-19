@@ -6,7 +6,10 @@ export abstract class SecuredService extends BaseService {
         super()
         this.client.interceptors.request.use((config: any) => {
             if (!config.headers["x-access-token"]) {
-                config.headers["x-access-token"] = AuthenticationService.getToken();
+                return AuthenticationService.getToken().then((token) => {
+                  config.headers["x-access-token"] = token;
+                  return config;
+                });
             }
             return config;
         })

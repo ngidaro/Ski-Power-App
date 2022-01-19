@@ -2,7 +2,6 @@
 import * as React from 'react';
 
 // React-Native
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ParamListBase, RouteProp } from '@react-navigation/native';
 import { Icon } from 'react-native-elements/dist/icons/Icon';
@@ -15,8 +14,8 @@ import HomePage from './Home/HomePage';
 import LoginPage from './LoginPage/LoginPage';
 import Activity from './Activity/Activity';
 import Profile from './Profile/Profile';
+import ActivityStack from './Activity/ActivityStack';
 
-const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const NavigationStack = () => {
@@ -31,7 +30,7 @@ const NavigationStack = () => {
     let icon: string = '';
     if(route.name === "Home") {
       icon = 'home';
-    } else if (route.name === "Activity") {
+    } else if (route.name === "ActivityStack") {
       icon = 'add-circle'
     } else if (route.name === "Profile") {
       icon = 'account-circle'
@@ -43,17 +42,13 @@ const NavigationStack = () => {
     <React.Fragment>
       {!userToken 
       ? <LoginPage setToken={setToken}/> 
-      // : <Stack.Navigator>
-      //     <Stack.Screen name="Home" component={HomePage} />
-      //     <Stack.Screen name="Detail" component={Detail} />
-      //   </Stack.Navigator>
       : <Tab.Navigator
           screenOptions={({ route }) => ({
             tabBarIcon: ({ focused, color, size}) => tabBarIcon(route, focused, color, size)
           })}
         >
           <Tab.Screen name="Home" component={HomePage} />
-          <Tab.Screen name="Activity" component={Activity} />
+          <Tab.Screen name="ActivityStack" component={ActivityStack} options={{ title: "Activity", headerShown: false }} />
           <Tab.Screen name="Profile" component={Profile} />
         </Tab.Navigator>
       }
