@@ -1,31 +1,45 @@
 // React
-import React from 'react';
+import React, { useState } from 'react';
 
 // React-Native
 import {
+  NativeEventEmitter,
+  NativeModules,
   StyleSheet,
 } from 'react-native';
-import Activity from './Activity';
+import { Text } from 'react-native-elements';
 
 // Navigation
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+// Components
 import ConnectDevice from './Bluetooth/ConnectDevice';
-import { Button } from 'react-native-elements/dist/buttons/Button';
-import { Text } from 'react-native-elements';
+import Activity from './Activity';
 
 const Stack = createNativeStackNavigator();
 
+const BleManagerModule = NativeModules.BleManager;
+const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
+
 const ActivityStack = ({ navigation }) => {
+
+  const [connectedDevice, setConnectedDevice] = useState<any>(null);
+  // Will need to connect 2 ESP32's
+  const [connectedDevice2, setConnectedDevice2] = useState<any>();
 
   const navigateTo = () => navigation.navigate("ConnectDevice")
 
   return (
     <Stack.Navigator 
       initialRouteName="Activity">
-      <Stack.Screen name="Activity" component={Activity} options={{headerRight: () => (
+      <Stack.Screen name="Activity" options={{headerRight: () => (
         <Text onPress={navigateTo} style={styles.connect}>Connect</Text>
-      )}} />              
-      <Stack.Screen name="ConnectDevice" component={ConnectDevice} options={{title: "Connect a Device"}}/>              
+      )}}>
+        {() => <Activity connectedDevice={connectedDevice}/>}
+      </Stack.Screen>
+      <Stack.Screen name="ConnectDevice" options={{title: "Connect a Device"}}>
+        {() => <ConnectDevice bleManagerEmitter={bleManagerEmitter} connectedDevice={connectedDevice} setConnectedDevice={setConnectedDevice}/>}
+      </Stack.Screen>
     </Stack.Navigator>
   );
 };

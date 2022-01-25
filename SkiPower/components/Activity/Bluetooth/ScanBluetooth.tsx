@@ -19,10 +19,16 @@ import BleManager from '../../../bluetooth/BleManager';
 import { AuthenticationService } from '../../../services/authentication.service';
 import ListItem from './ListItem';
 
-const BleManagerModule = NativeModules.BleManager;
-const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
+// const BleManagerModule = NativeModules.BleManager;
+// const bleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 
-const ScanBluetooth = () => {
+interface ScanBluetoothProps {
+  bleManagerEmitter: NativeEventEmitter;
+  connectedDevice: any;
+  setConnectedDevice: (peripheral: any) => void;
+}
+
+const ScanBluetooth = ({ bleManagerEmitter, connectedDevice, setConnectedDevice } : ScanBluetoothProps) => {
 
   // Bluetooth
   const [isScanning, setIsScanning] = useState(false);
@@ -71,36 +77,38 @@ const ScanBluetooth = () => {
   }
 
   useEffect(() => {
-    BleManager.start({showAlert: false});
-
-    const bleDiscoverPeripheralListener = bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral);
-    const bleStopScanListener = bleManagerEmitter.addListener('BleManagerStopScan', handleStopScan );
-    const bleDisconnectPeripheralListener = bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', handleDisconnectedPeripheral );
-    const bleCharacteristicListener = bleManagerEmitter.addListener('BleManagerDidUpdateValueForCharacteristic', handleUpdateValueForCharacteristic );
-
-    if (Platform.OS === 'android' && Platform.Version >= 23) {
-      PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION).then((result) => {
-          if (result) {
-            console.log("Permission is OK");
-          } else {
-            PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION).then((result) => {
-              if (result) {
-                console.log("User accept");
-              } else {
-                console.log("User refuse");
-              }
-            });
-          }
-      });
+    if(!connectedDevice) {
+      BleManager.start({showAlert: false});
+  
+      const bleDiscoverPeripheralListener = bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral);
+      const bleStopScanListener = bleManagerEmitter.addListener('BleManagerStopScan', handleStopScan );
+      const bleDisconnectPeripheralListener = bleManagerEmitter.addListener('BleManagerDisconnectPeripheral', handleDisconnectedPeripheral );
+      const bleCharacteristicListener = bleManagerEmitter.addListener('BleManagerDidUpdateValueForCharacteristic', handleUpdateValueForCharacteristic );
+  
+      if (Platform.OS === 'android' && Platform.Version >= 23) {
+        PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION).then((result) => {
+            if (result) {
+              console.log("Permission is OK");
+            } else {
+              PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION).then((result) => {
+                if (result) {
+                  console.log("User accept");
+                } else {
+                  console.log("User refuse");
+                }
+              });
+            }
+        });
+      }
+      
+      return (() => {
+        console.log('unmount');      
+        bleDiscoverPeripheralListener.remove();
+        bleStopScanListener.remove();
+        bleDisconnectPeripheralListener.remove();
+        bleCharacteristicListener.remove();
+      })
     }
-    
-    return (() => {
-      console.log('unmount');      
-      bleDiscoverPeripheralListener.remove();
-      bleStopScanListener.remove();
-      bleDisconnectPeripheralListener.remove();
-      bleCharacteristicListener.remove();
-    })
   },[])
 
   const startScan = () => {
@@ -133,12 +141,16 @@ const ScanBluetooth = () => {
             peripherals.set(peripheral.id, p);
             setList(Array.from(peripherals.values()));
           }
+
           console.log('Connected to ' + peripheral.id);
 
           setTimeout(() => {
             /* Test read current RSSI value */
             BleManager.retrieveServices(peripheral.id).then((peripheralData) => {
               console.log('Retrieved peripheral services', peripheralData);
+              
+              // Set connected Device data
+              setConnectedDevice(peripheralData);
 
               BleManager.readRSSI(peripheral.id).then((rssi) => {
                 console.log('Retrieved actual RSSI value', rssi);
@@ -187,7 +199,7 @@ const ScanBluetooth = () => {
               onPress={() => testPeripheral(item)}
               onShowUnderlay={separators.highlight}
               onHideUnderlay={separators.unhighlight}>
-              <ListItem name={item.name} isConnected={item?.connected ?? false} />
+              <ListItem name={item.name} isConnected={item.name == connectedDevice?.name ?? false} />
             </TouchableHighlight>
           }
         />

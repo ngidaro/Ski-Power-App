@@ -9,21 +9,24 @@ Text,
 TouchableOpacity,
 } from 'react-native';
 
-const Timer = () => {
+interface TimerProps {
+  isRecording: boolean;
+  setIsRecording: () => void;
+}
 
-  const [isRecording, setIsRecording] = useState<boolean>(false);
+const Timer = ({isRecording, setIsRecording} : TimerProps) => {
   const [timer, setTimer] = useState<number>(0);
   const countRef = useRef(null);
 
   const recordActivity = () => {
     if(!isRecording) {
-      setIsRecording(true);
+      setIsRecording();
       // Start Timer
       countRef.current = setInterval(() => {
         setTimer((time) => time + 1);
       }, 1000);
     } else {
-      setIsRecording(false)
+      setIsRecording()
       // Stop Timer
       clearInterval(countRef.current);
     }
@@ -52,13 +55,11 @@ const Timer = () => {
 
 const styles = StyleSheet.create({
   view: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    height: '100%',
+    alignItems: 'center',    
   },
   timer: {
     fontSize: 32,
+    padding: 16,
   },
   recordButton: {
     width: 75,
@@ -68,8 +69,6 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 100,
     backgroundColor: 'orange',
-    position: 'absolute',
-    bottom: 32,
   },
 });
 

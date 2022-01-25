@@ -3,15 +3,22 @@ import React from 'react';
 
 // React-Native
 import {
+  NativeEventEmitter,
 StyleSheet,
 View,
 } from 'react-native';
 import ScanBluetooth from './ScanBluetooth';
 
-const ConnectDevice = () => {
+interface ConnectDeviceProps {
+  bleManagerEmitter: NativeEventEmitter;
+  connectedDevice: any;
+  setConnectedDevice: (peripheral: any) => void;
+}
+
+const ConnectDevice = ({ bleManagerEmitter, connectedDevice, setConnectedDevice } : ConnectDeviceProps) => {
   return (
     <View style={styles.view}>
-      <ScanBluetooth />
+      <ScanBluetooth bleManagerEmitter={bleManagerEmitter} connectedDevice={connectedDevice} setConnectedDevice={setConnectedDevice}/>      
     </View>
   );
 };
