@@ -3,31 +3,32 @@ import React, { useState } from 'react';
 
 // React-Native
 import {
-StyleSheet,
-View,
-Image,
-Text,
+  StyleSheet,
+  View,
+  Image,
+  Text,
 } from 'react-native';
 import Snackbar from 'react-native-snackbar';
+import { StackActions } from '@react-navigation/native';
 
 // Services
 import { AuthenticationService } from '../../services/authentication.service';
 
 // Components
-import InputTextbox from './reusable/InputTextbox';
-import SubmitButton from './reusable/SubmitButton';
+import InputTextbox from '../reusable/InputTextbox';
+import SubmitButton from '../reusable/SubmitButton';
 
 // Images
 var SkiPowerLogo = require ('../../images/logo.png');
 
 interface SignInProps {
-  setView: (view: string) => void,
-  setToken: (token: string) => void,
+  setView: (view: string) => void;
+  navigation: any;
 }
 
-const SignIn = ({ setView, setToken }: SignInProps) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+const SignIn = ({ setView, navigation }: SignInProps) => {
+  const [email, setEmail] = useState('ngidaro@hotmail.com');
+  const [password, setPassword] = useState('123');
 
   const login = () => {
     const services = new AuthenticationService()
@@ -42,7 +43,10 @@ const SignIn = ({ setView, setToken }: SignInProps) => {
         // Save user token here
         if (res.data.token) {
           AuthenticationService.saveToken(res.data.token);
-          setToken(res.data.token);
+          // Re-routes to LoggedIn Stack and removing the LoginPage as the parent
+          navigation.dispatch(
+            StackActions.replace("LoggedIn")
+          );
         }
       }
     })
@@ -52,7 +56,7 @@ const SignIn = ({ setView, setToken }: SignInProps) => {
     <View style={styles.view}>
       <Image style={styles.image} source={SkiPowerLogo}/>
       <InputTextbox value={email} placeholder='Email' onChange={setEmail}/>
-      <InputTextbox value={password} placeholder='Password' onChange={setPassword}/>
+      <InputTextbox value={password} placeholder='Password' isPassword onChange={setPassword}/>
       <SubmitButton text='Log In' buttonClicked={login}/>
       <Text style={styles.createAccountText} onPress={() => setView('createaccount')}>Create Account?</Text>
     </View>
@@ -61,6 +65,7 @@ const SignIn = ({ setView, setToken }: SignInProps) => {
 
 const styles = StyleSheet.create({
   view: {
+    backgroundColor: 'white',
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',

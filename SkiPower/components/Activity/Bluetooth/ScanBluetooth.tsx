@@ -16,7 +16,6 @@ TouchableHighlight,
 } from 'react-native';
 
 import BleManager from '../../../bluetooth/BleManager';
-import { AuthenticationService } from '../../../services/authentication.service';
 import ListItem from './ListItem';
 
 // const BleManagerModule = NativeModules.BleManager;
@@ -78,7 +77,7 @@ const ScanBluetooth = ({ bleManagerEmitter, connectedDevice, setConnectedDevice 
 
   useEffect(() => {
     if(!connectedDevice) {
-      BleManager.start({showAlert: false});
+      BleManager.start({showAlert: false, forceLegacy: true});
   
       const bleDiscoverPeripheralListener = bleManagerEmitter.addListener('BleManagerDiscoverPeripheral', handleDiscoverPeripheral);
       const bleStopScanListener = bleManagerEmitter.addListener('BleManagerStopScan', handleStopScan );
@@ -100,9 +99,7 @@ const ScanBluetooth = ({ bleManagerEmitter, connectedDevice, setConnectedDevice 
             }
         });
       }
-      
-      return (() => {
-        console.log('unmount');      
+      return (() => {        
         bleDiscoverPeripheralListener.remove();
         bleStopScanListener.remove();
         bleDisconnectPeripheralListener.remove();
@@ -176,7 +173,7 @@ const ScanBluetooth = ({ bleManagerEmitter, connectedDevice, setConnectedDevice 
         // onPress={() => AuthenticationService.clearToken()}
         onPress={startScan}
         style={styles.scanDevices}>
-        <Text>Scan Bluetooth ({isScanning ? 'on' : 'off'})</Text>
+        <Text>Scan Devices ({isScanning ? 'on' : 'off'})</Text>
       </TouchableOpacity>
       {isScanning ? <Text>Scanning...</Text> :
         <FlatList 
@@ -204,12 +201,12 @@ const ScanBluetooth = ({ bleManagerEmitter, connectedDevice, setConnectedDevice 
           }
         />
       }
-      <TouchableOpacity
+      {/* <TouchableOpacity
         // onPress={() => AuthenticationService.clearToken()}
         onPress={retrieveConnected}
         style={styles.scanDevices}>
         <Text>Retrieve Connected</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   )
 };
@@ -220,6 +217,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: '100%',
     flexDirection: 'column',
+    padding: 16,
   },
   list: {
     flex: 1,

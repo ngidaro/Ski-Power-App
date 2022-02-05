@@ -8,18 +8,21 @@ TextInput,
 } from 'react-native';
 
 interface InputTextboxProps {
-  value: string,
-  placeholder: string,
-  onChange: ((text: string) => void) | undefined,
+  value: string;
+  placeholder: string;
+  isPassword?: boolean;
+  onChange: ((text: string) => void) | undefined;
 }
 
-const InputTextbox = ({ value, placeholder, onChange }: InputTextboxProps) => {
+const InputTextbox = ({ value, placeholder, isPassword = false, onChange }: InputTextboxProps) => {
   return (
     <TextInput
         style={styles.input}
         onChangeText={onChange}
         value={value}
         placeholder={placeholder}
+        placeholderTextColor={'gray'}
+        secureTextEntry={isPassword}
         autoCapitalize='none'/>
   );
 };

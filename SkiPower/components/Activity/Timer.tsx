@@ -1,5 +1,5 @@
 // React
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 
 // React-Native
 import {
@@ -7,15 +7,18 @@ StyleSheet,
 View,
 Text,
 TouchableOpacity,
+Alert,
 } from 'react-native';
+import { formatTime } from '../../reusable/formatTime';
 
 interface TimerProps {
   isRecording: boolean;
   setIsRecording: () => void;
+  timer: number;
+  setTimer: (time: number) => void
 }
 
-const Timer = ({isRecording, setIsRecording} : TimerProps) => {
-  const [timer, setTimer] = useState<number>(0);
+const Timer = ({isRecording, setIsRecording, timer = 0, setTimer} : TimerProps) => {
   const countRef = useRef(null);
 
   const recordActivity = () => {
@@ -26,24 +29,31 @@ const Timer = ({isRecording, setIsRecording} : TimerProps) => {
         setTimer((time) => time + 1);
       }, 1000);
     } else {
-      setIsRecording()
-      // Stop Timer
-      clearInterval(countRef.current);
+      // Alert the user for confirmation to stop and save workout
+      Alert.alert(
+        "Are you sure you want to end your workout?",
+        "",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "End",
+            onPress: () => {
+              setIsRecording()
+              // Stop Timer
+              clearInterval(countRef.current);
+            }
+          }
+        ]
+      )
     }
-  }
-
-  const formatTime = () => {
-    const getSeconds: string = `0${(timer % 60)}`.slice(-2)
-    const minutes: number = Math.floor(timer / 60)
-    const getMinutes: string = `0${minutes % 60}`.slice(-2)
-    const getHours: string = `0${Math.floor(timer / 3600)}`.slice(-2)
-
-    return `${getHours} : ${getMinutes} : ${getSeconds}`
   }
 
   return (
     <View style={styles.view}>
-      <Text style={styles.timer}>{formatTime()}</Text>
+      <Text style={styles.timer}>{formatTime(timer)}</Text>
       <TouchableOpacity
         onPress={() => recordActivity()}
         style={styles.recordButton}>
@@ -68,7 +78,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 10,
     borderRadius: 100,
-    backgroundColor: 'orange',
+    backgroundColor: '#ADD8E6',
   },
 });
 

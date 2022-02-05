@@ -1,30 +1,52 @@
 // React
-import React, { useState } from 'react';
+import { StackActions } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
 
 // React-Native
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { AuthenticationService } from '../../services/authentication.service';
 
 // Components
 import CreateAccount from './CreateAccount';
 import SignIn from './SignIn';
 
 interface LoginPageProps {
-  setToken: (token: string) => void,
+  navigation?: any;
 }
 
-const LoginPage = ({setToken}: LoginPageProps) => {
+const LoginPage = ({ navigation }: LoginPageProps) => {
   const [view, setView] = useState('signin')
 
+  useEffect(() => {
+    AuthenticationService.getToken().then((token) => {
+      if (token) {
+        // Re-routes to LoggedIn Stack and removing the LoginPage as the parent
+        navigation.dispatch(
+          StackActions.replace("LoggedIn")
+        );
+      }
+    });
+  },[])
+
   const components: any = {
-    'signin': <SignIn setView={setView} setToken={setToken} />,
-    'createaccount' : <CreateAccount setView={setView} setToken={setToken} />,
+    'signin': <SignIn setView={setView} navigation={navigation} />,
+    'createaccount' : <CreateAccount navigation={navigation} setView={setView} />,
   }
 
   return (
-    <View>
+    <View style={styles.view}>
       {components[view]}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  view: {
+    backgroundColor: 'white',
+    alignItems: 'center',    
+    width: '100%',
+    height: '100%',
+  },
+});
 
 export default LoginPage;

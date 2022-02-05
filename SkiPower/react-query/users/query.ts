@@ -2,7 +2,7 @@ import { UserService } from "../../services/users.service";
 
 const getUser = () => {
   const services = new UserService();
-  return services.getUser();
+  return services.getUser().then((data) => data.data);
 }
 
 export {
