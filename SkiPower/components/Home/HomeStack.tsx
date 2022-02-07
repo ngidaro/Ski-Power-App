@@ -12,7 +12,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 // Components
 import HomePage from './HomePage';
 import AllActivities from './AllActivities';
-import ActivityDetails from './ActivityDetails';
+import ActivityDetailsContainer from './ActivityDetailsContainer';
 
 const Stack = createNativeStackNavigator();
 
@@ -27,7 +27,7 @@ const HomeStack = ({ navigation }) => {
       <Stack.Screen name="AllActivities" options={{title: "Activities"}}>
         {() => <AllActivities navigation={navigation} />}
       </Stack.Screen>
-      <Stack.Screen name="ActivityDetails" component={ActivityDetails} options={{ title: 'Activity'}} />
+      <Stack.Screen name="ActivityDetails" component={ActivityDetailsContainer} options={{ title: 'Activity'}} />
     </Stack.Navigator>
   );
 };

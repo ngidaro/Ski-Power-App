@@ -15,6 +15,10 @@ export class ActivityService extends SecuredService {
       return this.get(`${this.baseUrl}/`);
     }
 
+    public getActivityData(activity: string): Promise<ApiResult<any>> {
+      return this.get(`${this.baseUrl}/activitydata/${activity}`);
+    }
+
     public postNewActvity(activity: Activity): Promise<ApiResult<any>> {
       return this.post(`${this.baseUrl}/newactivity`, activity);
     }

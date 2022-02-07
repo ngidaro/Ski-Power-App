@@ -1,29 +1,41 @@
 // React
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 
 // React-Native
 import {
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 import { Text } from 'react-native-elements';
 
+// React-Query
+import { useQuery } from 'react-query';
+import { getActivityData } from '../../react-query/activity/query';
+import { ACTIVITYDATA } from '../../react-query/activity/queryKeys';
+
 // Models
 import { Activity } from '../../models/Activity';
+
+// Functions
 import { formatTime } from '../../reusable/formatTime';
+
+// Constants
+import { LOADCELL, PHONEGPS } from './useActivityDetail.hooks';
+
+// Components
+import LineGraph from './LineGraph';
 
 interface ActivityDetailsProps {
   route?: any;
   navigation?: any;
+  activity: Activity;
+  index: number;
 }
 
-const ActivityDetails = ({ route, navigation }: ActivityDetailsProps) => {
-  const activity: Activity = route.params.activity;
-  const index: number = route.params.index;
+const ActivityDetails = ({ route, navigation, activity, index }: ActivityDetailsProps) => {
 
-  useEffect(() => {
-    navigation.setOptions({title: `Activity ${index}`});
-  },[])
+  const { data, isFetching } = useQuery(ACTIVITYDATA, async () => getActivityData(activity?._id ?? ""));
 
   const fieldTemplate = useCallback((fieldName: string, fieldValue: string) => {
     return (
@@ -35,11 +47,32 @@ const ActivityDetails = ({ route, navigation }: ActivityDetailsProps) => {
   },[]);
 
   return (
-    <View style={styles.view}>
+    <ScrollView style={styles.view}>
       {fieldTemplate("Name", `Activity ${index}`)}
       {fieldTemplate("Date", new Date(Date.parse(activity?.creationdate)).toDateString())}
       {fieldTemplate("Time", formatTime(activity?.totaltime))}
-    </View>
+      {(!data?.loadcell ?? false) && (!data?.IMU ?? false) && (!data?.phoneGPS ?? false) && 
+      <View style={styles.noDataView}>
+        <Text style={styles.noDataText}>No Data Available</Text>
+      </View>
+      }
+      {(data?.loadcell ?? false) && 
+        <LineGraph 
+          title='Force Applied'
+          activity={activity} 
+          data={data.loadcell} 
+          isFetching={isFetching} 
+          dataType={LOADCELL} 
+          yAxisSuffix=' N'/>}
+      {(data?.phoneGPS ?? false) && 
+        <LineGraph 
+          title='Speed'
+          activity={activity} 
+          data={data.phoneGPS} 
+          isFetching={isFetching} 
+          dataType={PHONEGPS} 
+          yAxisSuffix=' m/s'/>}
+    </ScrollView>
   );
 };
 
@@ -61,6 +94,17 @@ const styles = StyleSheet.create({
   fieldText: {
     fontSize: 16,
     fontFamily: 'Arial',
+  },
+  noDataView: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 128,
+  },
+  noDataText: {
+    alignItems: 'center',
+    fontSize: 16,
+    fontFamily: 'Arial',
+    fontWeight: 'bold',
   },
 });
 
