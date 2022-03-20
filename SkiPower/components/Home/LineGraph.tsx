@@ -26,7 +26,7 @@ export interface GraphProps {
   navigation?: any;
   data: any;
   isFetching: boolean;
-  dataType: "LOADCELL" | "PHONEGPS" | "IMU";
+  dataType: "LOADCELL" | "PHONEGPS" | "IMU" | "POWER";
   title: string;
   yAxisSuffix: string;
 }

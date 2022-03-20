@@ -6,6 +6,7 @@ import { Activity } from "../models/Activity";
 import { GeolocationResponse } from '@react-native-community/geolocation';
 import { IMU } from "../models/IMU";
 import { LoadCell } from "../models/Loadcell";
+import { PhoneGPSData } from "../models/PhoneGPSData";
 
 export class ActivityService extends SecuredService {
 
@@ -28,7 +29,7 @@ export class ActivityService extends SecuredService {
     }
 
     // Add/Update GPS phone entry
-    public phoneGPS(_id: string | null, activity: string, GPSdata: GeolocationResponse[]): Promise<ApiResult<any>> {
+    public phoneGPS(_id: string | null, activity: string, GPSdata: PhoneGPSData[]): Promise<ApiResult<any>> {
       return this.post(`${this.baseUrl}/phoneGPS`, {_id, activity, GPSdata});
     }
 

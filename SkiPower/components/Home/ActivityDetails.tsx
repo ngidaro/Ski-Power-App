@@ -21,7 +21,7 @@ import { Activity } from '../../models/Activity';
 import { formatTime } from '../../reusable/formatTime';
 
 // Constants
-import { IMU, LOADCELL, PHONEGPS } from './useActivityDetail.hooks';
+import { IMU, LOADCELL, PHONEGPS, POWER } from './useActivityDetail.hooks';
 
 // Components
 import LineGraph from './LineGraph';
@@ -56,6 +56,16 @@ const ActivityDetails = ({ route, navigation, activity, index }: ActivityDetails
         <Text style={styles.noDataText}>No Data Available</Text>
       </View>
       }
+      {((data?.loadcell ?? false) && 
+        (data?.phoneGPS ?? false) &&
+        (data?.IMU ?? false)) && 
+        <LineGraph 
+          title='Power'
+          activity={activity}
+          data={[data.loadcell, data.IMU, data.phoneGPS]}
+          isFetching={isFetching}
+          dataType={POWER} 
+          yAxisSuffix=' W'/>}
       {(data?.loadcell ?? false) && 
         <LineGraph 
           title='Force Applied'

@@ -34,7 +34,7 @@ export const parseIMUData = (data: string[]): IMUData[] => {
 }
 
 export const parseLoadCellData = (data: string[]): LoadCellData[] => {
-  // Data coming in is of the form: ["weight,time"] where rot is Gyro and gForce is Accel.
+  // Data coming in is of the form: ["weight,time"]
   let loadCellData: LoadCellData[] = [];
   const len = data.length;
   var i = 0;

@@ -5,6 +5,7 @@ import { Activity } from "../../models/Activity";
 import { GeolocationResponse } from '@react-native-community/geolocation';
 import { IMU } from "../../models/IMU";
 import { LoadCell } from "../../models/Loadcell";
+import { PhoneGPSData } from "../../models/PhoneGPSData";
 
 const postNewActivity = (activity: Activity) => {
   const services = new ActivityService();
@@ -17,7 +18,7 @@ const updateActivity = (activity: Activity | undefined) => {
 }
 
 // Add/Update existing data
-const phoneGPS = (data: {_id: string | null, activity: string, GPSdata: GeolocationResponse[]}) => {
+const phoneGPS = (data: {_id: string | null, activity: string, GPSdata: PhoneGPSData[]}) => {
   const services = new ActivityService();
   return services.phoneGPS(data._id, data.activity, data.GPSdata);
 }

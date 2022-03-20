@@ -10,6 +10,8 @@ import { GraphProps } from "./LineGraph";
 export const LOADCELL = 'LOADCELL';
 export const PHONEGPS = 'PHONEGPS';
 export const IMU = 'IMU';
+export const POWER = 'POWER';
+
 
 export const useActivityDetails = ({ route, navigation, activity, data, isFetching, dataType } : GraphProps) => {  
 
@@ -39,11 +41,41 @@ export const useActivityDetails = ({ route, navigation, activity, data, isFetchi
         case IMU:
           if(data.IMUdata && (dataArray.length === 0)) {
             data.IMUdata.forEach(val => {
-              // var xAngle = Math.atan2(x, y)/(Math.PI/180) where x and y are the gyroscope data
-              const xAngle = Math.atan2(Number(val.gyro.x), Number(val.gyro.y)) / (Math.PI/180);
+              const xAngle = Math.atan2(Number(val.accel.x), Number(val.accel.y)) / (Math.PI/180);
               setDataArray(previous => [...previous, xAngle >= 1 ? xAngle : 0]);
             });
           }
+          break;
+        case POWER:
+          const loadcelldata = data[0].loadcelldata;
+          const IMUdata = data[1].IMUdata;
+          const GPSdata = data[2].GPSdata;
+
+          GPSdata.forEach(val  => {
+            const index = loadcelldata.findIndex(value => value.timestamp === val.hardwaretimestamp);
+            if(index !== -1){
+              // Index exists
+              // The index is the same for the loadcell and the IMU data
+
+              // xAngle is in radians
+              const xAngle = Math.atan2(Number(IMUdata[index].accel.x), Number(IMUdata[index].accel.y));
+              const force = Number(Math.abs(loadcelldata[index].weight)) * 0.00981;  // In N
+              const forceX = force * Math.cos(xAngle);
+              const speed = Number(Math.abs(val.coords.speed));
+              const power = forceX * speed;
+
+              // console.log("xAngle: " + xAngle)
+              // console.log("force: " + force)
+              // console.log("forceX: " + forceX)
+              // console.log("power: " + power)
+              // console.log("------------------------------------")
+
+              setDataArray(previous => [...previous, power > 0.01 ? power : 0]);
+            } else {
+              // Index does not exist (or did not record) so the value is 0
+              setDataArray(previous => [...previous, 0]);
+            }
+          });
           break;
         default:
           break;

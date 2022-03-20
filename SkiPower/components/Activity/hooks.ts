@@ -26,6 +26,7 @@ import { Activity } from "../../models/Activity";
 import { IMUData } from "../../models/IMU";
 import { LoadCellData } from "../../models/Loadcell";
 import { parseIMUData, parseLoadCellData } from "../../reusable/parse";
+import { PhoneGPSData } from "../../models/PhoneGPSData";
 
 const SERVICE_UUID = '6725B97A-B780-48E2-A199-27B94E9F6E1B';
 const INPUT_UUID = '5D695378-B55B-4F49-B2DE-B1575A839B19';
@@ -51,8 +52,10 @@ export const useActivity = ({ route, navigation, connectedDevice, setConnectedDe
   const postToDBRef = useRef(null);
 
   // Geolocation
-  const [positionData, setPositionData] =useState<GeolocationResponse[]>([]);
+  const [positionData, setPositionData] =useState<PhoneGPSData[]>([]);
   const [watchID, setWatchID] = useState<number | null>(null);
+
+  let currentLoadCellData = "";
 
   const queryClient = useQueryClient();
 
@@ -120,24 +123,43 @@ export const useActivity = ({ route, navigation, connectedDevice, setConnectedDe
     }
   }
 
+  const updatePositionData = (position: GeolocationResponse) => {
+    console.log(currentLoadCellData);
+    setPositionData(previous => [...previous, {
+      coords: {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        altitude: position.coords.altitude,
+        accuracy: position.coords.accuracy,
+        altitudeAccuracy: position.coords.altitudeAccuracy,
+        heading: position.coords.heading,
+        speed: position.coords.speed,
+      },
+      timestamp: position.timestamp,
+      hardwaretimestamp: currentLoadCellData 
+        ? parseLoadCellData([currentLoadCellData])[0].timestamp
+        : null,
+    }]);
+  };
+
   // Once the Record button is pressed, Start sending/saving data
   const startRecording = useCallback(async () => {
     if(isRecording) {
-
       // Create new activity so that new data entries in DB can reference the activity ID
       addActivityMutation.mutate({});
 
       // ---------------------- Begin Recording Location from Device ----------------------
       Geolocation.getCurrentPosition(
         position => {
-          setPositionData(previous => [...previous, position]);
+          updatePositionData(position);
         },
         error => console.log(JSON.stringify(error)),
         {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000, distanceFilter: 1}
       );
   
+      // Save data in a JSON
       setWatchID(Geolocation.watchPosition(position => {
-          setPositionData(previous => [...previous, position]);
+          updatePositionData(position)
         },
         error => console.log(JSON.stringify(error)),
         {enableHighAccuracy: true, timeout: 20000, maximumAge: 1000, distanceFilter: 1}
@@ -150,7 +172,7 @@ export const useActivity = ({ route, navigation, connectedDevice, setConnectedDe
         await device.discoverAllServicesAndCharacteristics();
         
         //  Set what to do when DC is detected
-        await bleManager.onDeviceDisconnected(connectedDevice.id, (error, device) => {
+        bleManager.onDeviceDisconnected(connectedDevice.id, (error, device) => {
           console.log('Device DC');
           setConnectedDevice(null);
         });
@@ -173,6 +195,7 @@ export const useActivity = ({ route, navigation, connectedDevice, setConnectedDe
 
             // Save data into an array
             setLoadcellData(previous => [...previous, base64.decode(readCharLoadcell?.value ?? '') ]);
+            currentLoadCellData = base64.decode(readCharLoadcell?.value ?? '');
             setIMUData(previous => [...previous, base64.decode(readCharIMU?.value ?? '') ]);
           }, 250);
         } else {
