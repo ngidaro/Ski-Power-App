@@ -21,7 +21,7 @@ import { Activity } from '../../models/Activity';
 import { formatTime } from '../../reusable/formatTime';
 
 // Constants
-import { LOADCELL, PHONEGPS } from './useActivityDetail.hooks';
+import { IMU, LOADCELL, PHONEGPS } from './useActivityDetail.hooks';
 
 // Components
 import LineGraph from './LineGraph';
@@ -72,6 +72,14 @@ const ActivityDetails = ({ route, navigation, activity, index }: ActivityDetails
           isFetching={isFetching} 
           dataType={PHONEGPS} 
           yAxisSuffix=' m/s'/>}
+      {(data?.IMU ?? false) && 
+        <LineGraph 
+          title='Pole Angle'
+          activity={activity}
+          data={data.IMU}
+          isFetching={isFetching}
+          dataType={IMU} 
+          yAxisSuffix=' deg'/>}
     </ScrollView>
   );
 };

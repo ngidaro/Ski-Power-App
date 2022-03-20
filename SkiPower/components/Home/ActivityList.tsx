@@ -100,7 +100,8 @@ const styles = StyleSheet.create({
   },
   noActivities: {
     color: 'gray',
-    bottom: 100,
+    padding: 16,
+    textAlign: 'center',
   },
 });
 

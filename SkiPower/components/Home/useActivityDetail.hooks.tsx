@@ -24,7 +24,8 @@ export const useActivityDetails = ({ route, navigation, activity, data, isFetchi
           if(data.loadcelldata && (dataArray.length === 0)) {
             // Populate array with data if the array is empty
             data.loadcelldata.forEach(val => {
-              setDataArray(previous => [...previous, Number(Math.abs(val.weight)) * 9.81]);
+              const weight = Number(Math.abs(val.weight)) * 0.00981;
+              setDataArray(previous => [...previous, weight >= 1 ? weight : 0]);
             });
           }
           break;
@@ -36,9 +37,14 @@ export const useActivityDetails = ({ route, navigation, activity, data, isFetchi
           }
           break;
         case IMU:
-          
+          if(data.IMUdata && (dataArray.length === 0)) {
+            data.IMUdata.forEach(val => {
+              // var xAngle = Math.atan2(x, y)/(Math.PI/180) where x and y are the gyroscope data
+              const xAngle = Math.atan2(Number(val.gyro.x), Number(val.gyro.y)) / (Math.PI/180);
+              setDataArray(previous => [...previous, xAngle >= 1 ? xAngle : 0]);
+            });
+          }
           break;
-      
         default:
           break;
       }
