@@ -1,11 +1,12 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from 'axios';
 import { ApiResult } from './api-result';
 
+// export const SERVER_URL: string = 'http://10.0.0.233:3333';
+export const SERVER_URL: string = 'http://3.229.46.116';
+
 export abstract class BaseService {
 
-    // public static serverURl: string = 'http://localhost:3333';
-    // public static serverURl: string = 'http://10.0.0.233:3333';
-    public static serverURl: string = 'http://3.229.46.116';
+    public static serverURl: string = SERVER_URL;
     protected client: AxiosInstance;
 
     constructor() {

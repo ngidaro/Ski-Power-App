@@ -6,6 +6,7 @@ import { toString } from "lodash";
 
 // Components
 import { GraphProps } from "./LineGraph";
+import { IMUData } from "../../models/IMU";
 
 export const LOADCELL = 'LOADCELL';
 export const PHONEGPS = 'PHONEGPS';
@@ -26,8 +27,9 @@ export const useActivityDetails = ({ route, navigation, activity, data, isFetchi
           if(data.loadcelldata && (dataArray.length === 0)) {
             // Populate array with data if the array is empty
             data.loadcelldata.forEach(val => {
-              const weight = Number(Math.abs(val.weight)) * 0.00981;
-              setDataArray(previous => [...previous, weight >= 1 ? weight : 0]);
+              const weight = val.weight * 0.00981;
+              // setDataArray(previous => [...previous, weight >= 0.05 ? weight : 0]);
+              setDataArray(previous => [...previous, weight]);
             });
           }
           break;
@@ -40,8 +42,29 @@ export const useActivityDetails = ({ route, navigation, activity, data, isFetchi
           break;
         case IMU:
           if(data.IMUdata && (dataArray.length === 0)) {
+            // let initTime = data.IMUdata[0].timestamp;
+            let previousData: IMUData;
             data.IMUdata.forEach(val => {
-              const xAngle = Math.atan2(Number(val.accel.x), Number(val.accel.y)) / (Math.PI/180);
+              let xAngle: number;
+              if(val.accel.y > 1) {
+                if(previousData){
+                  xAngle = Math.atan2(Number(previousData.accel.x), Number(previousData.accel.y)) / (Math.PI/180);
+                } else {
+                  xAngle = 90;
+                }
+              } else {
+                xAngle = Math.atan2(Number(val.accel.x), Number(val.accel.y)) / (Math.PI/180);
+                previousData = val;
+              }
+
+              // const elapsedTime = (val.timestamp - initTime) / 1000;  // Get elapsed time in seconds
+              // const accData = (Math.atan2(Number(val.accel.x), Number(val.accel.y)) / (Math.PI/180)) * 0.96;
+              // const gyroData = val.gyro.y * elapsedTime * 0.04;
+              // const xAngle = accData + gyroData;
+
+              // // Update initTime to be the previous time
+              // initTime = val.timestamp;
+
               setDataArray(previous => [...previous, xAngle >= 1 ? xAngle : 0]);
             });
           }
@@ -61,14 +84,8 @@ export const useActivityDetails = ({ route, navigation, activity, data, isFetchi
               const xAngle = Math.atan2(Number(IMUdata[index].accel.x), Number(IMUdata[index].accel.y));
               const force = Number(Math.abs(loadcelldata[index].weight)) * 0.00981;  // In N
               const forceX = force * Math.cos(xAngle);
-              const speed = Number(Math.abs(val.coords.speed));
+              const speed = val.coords.speed > 0 ? Number(Math.abs(val.coords.speed)) : 0;
               const power = forceX * speed;
-
-              // console.log("xAngle: " + xAngle)
-              // console.log("force: " + force)
-              // console.log("forceX: " + forceX)
-              // console.log("power: " + power)
-              // console.log("------------------------------------")
 
               setDataArray(previous => [...previous, power > 0.01 ? power : 0]);
             } else {

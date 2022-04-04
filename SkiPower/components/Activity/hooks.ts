@@ -124,7 +124,6 @@ export const useActivity = ({ route, navigation, connectedDevice, setConnectedDe
   }
 
   const updatePositionData = (position: GeolocationResponse) => {
-    console.log(currentLoadCellData);
     setPositionData(previous => [...previous, {
       coords: {
         latitude: position.coords.latitude,
@@ -184,7 +183,7 @@ export const useActivity = ({ route, navigation, connectedDevice, setConnectedDe
         await device.readCharacteristicForService(SERVICE_UUID, OUTPUT_UUID);
         await device.readCharacteristicForService(SERVICE_UUID, LOADCELL_OUTPUT_UUID);
         await device.readCharacteristicForService(SERVICE_UUID, IMU_OUTPUT_UUID);
-  
+
         if(Platform.OS === "ios") {
           // On iOS monitorCharacteristicForService only shows the data once... therefore we will use read instead
           countRef.current = setInterval(async () => {
