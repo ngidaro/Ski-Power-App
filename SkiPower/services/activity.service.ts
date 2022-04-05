@@ -6,6 +6,7 @@ import { Activity } from "../models/Activity";
 import { GeolocationResponse } from '@react-native-community/geolocation';
 import { IMU } from "../models/IMU";
 import { LoadCell } from "../models/Loadcell";
+import { GPS } from "../models/GPS";
 import { PhoneGPSData } from "../models/PhoneGPSData";
 
 export class ActivityService extends SecuredService {
@@ -34,7 +35,7 @@ export class ActivityService extends SecuredService {
     }
 
     // Save Hardware data (Only able to Add new entry...)
-    public saveHardwareData(activity: string, IMU: IMU, loadcell: LoadCell): Promise<ApiResult<any>> {
-      return this.post(`${this.baseUrl}/savehardwaredata`, {activity, IMU, loadcell});
+    public saveHardwareData(activity: string, imu: IMU, loadcell: LoadCell, gps: GPS): Promise<ApiResult<any>> {
+      return this.post(`${this.baseUrl}/savehardwaredata`, {activity, imu, loadcell, gps});
     }
 }

@@ -21,7 +21,7 @@ import { Activity } from '../../models/Activity';
 import { formatTime } from '../../reusable/formatTime';
 
 // Constants
-import { IMU, LOADCELL, PHONEGPS, POWER } from './useActivityDetail.hooks';
+import { GPS, IMU, LOADCELL, PHONEGPS, POWER } from './useActivityDetail.hooks';
 
 // Components
 import LineGraph from './LineGraph';
@@ -51,18 +51,18 @@ const ActivityDetails = ({ route, navigation, activity, index }: ActivityDetails
       {fieldTemplate("Name", `Activity ${index}`)}
       {fieldTemplate("Date", new Date(Date.parse(activity?.creationdate)).toDateString())}
       {fieldTemplate("Time", formatTime(activity?.totaltime))}
-      {(!data?.loadcell ?? false) && (!data?.IMU ?? false) && (!data?.phoneGPS ?? false) && 
+      {(!data?.loadcell ?? false) && (!data?.IMU ?? false) && (!data?.phoneGPS ?? false) && (!data?.GPS ?? false) && 
       <View style={styles.noDataView}>
         <Text style={styles.noDataText}>No Data Available</Text>
       </View>
       }
       {((data?.loadcell ?? false) && 
-        (data?.phoneGPS ?? false) &&
-        (data?.IMU ?? false)) && 
+        ((data?.phoneGPS ?? false) || (data?.GPS ?? false)) &&
+        (data?.IMU?.IMUdata.length > 0 ?? false)) && 
         <LineGraph 
           title='Power'
           activity={activity}
-          data={[data.loadcell, data.IMU, data.phoneGPS]}
+          data={[data.loadcell, data.IMU, data?.GPS ?? data.phoneGPS]}
           isFetching={isFetching}
           dataType={POWER} 
           yAxisSuffix=' W'/>}
@@ -74,15 +74,15 @@ const ActivityDetails = ({ route, navigation, activity, index }: ActivityDetails
           isFetching={isFetching} 
           dataType={LOADCELL} 
           yAxisSuffix=' N'/>}
-      {(data?.phoneGPS ?? false) && 
+      {((data?.phoneGPS ?? false) || (data?.GPS ?? false)) && 
         <LineGraph 
           title='Speed'
           activity={activity} 
-          data={data.phoneGPS} 
+          data={data?.GPS ?? data.phoneGPS} 
           isFetching={isFetching} 
-          dataType={PHONEGPS} 
+          dataType={data.GPS ? GPS : PHONEGPS} 
           yAxisSuffix=' m/s'/>}
-      {(data?.IMU ?? false) && 
+      {(data?.IMU?.IMUdata.length > 0 ?? false) && 
         <LineGraph 
           title='Pole Angle'
           activity={activity}

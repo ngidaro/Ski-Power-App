@@ -15,8 +15,7 @@ import { Platform } from "react-native";
 import { ActivityProps, bleManager } from "./Activity";
 
 // GeoLocation
-import Geolocation from '@react-native-community/geolocation'
-import { GeolocationResponse } from '@react-native-community/geolocation';
+import Geolocation, { GeolocationResponse } from '@react-native-community/geolocation'
 
 // Bluetooth
 import { Device } from 'react-native-ble-plx';
@@ -25,8 +24,8 @@ import { Device } from 'react-native-ble-plx';
 import { Activity } from "../../models/Activity";
 import { IMUData } from "../../models/IMU";
 import { LoadCellData } from "../../models/Loadcell";
-import { parseIMUData, parseLoadCellData } from "../../reusable/parse";
-import { PhoneGPSData } from "../../models/PhoneGPSData";
+import { parseIMUData, parseLoadCellData, parseGPSData } from "../../reusable/parse";
+import { GPSdata } from "../../models/GPS";
 
 const SERVICE_UUID = '6725B97A-B780-48E2-A199-27B94E9F6E1B';
 const INPUT_UUID = '5D695378-B55B-4F49-B2DE-B1575A839B19';
@@ -34,6 +33,7 @@ const OUTPUT_UUID = 'DC51B616-6197-4E57-A102-F7C77E6A3B01';
 
 const LOADCELL_OUTPUT_UUID =  "358B2F25-7B72-4116-BE08-979E946A3CEF";
 const IMU_OUTPUT_UUID = "F6F693DD-4369-4358-8C2B-97D68A71EC74";
+const GPS_OUTPUT_UUID = "0051D730-611A-463B-B0D9-0159A8625C65";
 
 export const useActivity = ({ route, navigation, connectedDevice, setConnectedDevice } : ActivityProps) => {  
   // Timer/Reading from Microcontroller
@@ -42,11 +42,13 @@ export const useActivity = ({ route, navigation, connectedDevice, setConnectedDe
   const [currentActivity, setCurrentActivity] = useState<Activity>();
   const [IMUData, setIMUData] = useState<string[]>([]);
   const [loadcellData, setLoadcellData] = useState<string[]>([]);
+  const [GPSData, setGPSData] = useState<string[]>([]);
 
   // Data IDs
   const [phoneGPSId, setPhoneGPSId] = useState<string |null>(null);
   const [IMUId, setIMUId] = useState<string |null>(null);
   const [loadcellId, setLoadcellId] = useState<string |null>(null);
+  const [GPSId, setGPSId] = useState<string |null>(null);
 
   const countRef = useRef(null);
   const postToDBRef = useRef(null);
@@ -101,10 +103,11 @@ export const useActivity = ({ route, navigation, connectedDevice, setConnectedDe
     setPositionData([]);
 
     if(saveOnlyOnStop) {
-      console.log("Saving IMU and LoadCell Data");
+      console.log("Saving IMU - LoadCell - GPS Data");
       // Convert data into proper format before saving
       const parsedIMUData: IMUData[] = parseIMUData(IMUData);
       const parsedLoadCellData: LoadCellData[] = parseLoadCellData(loadcellData);
+      const parsedGPSData: GPSdata[] = parseGPSData(GPSData);
 
       // Save the data to the DB
       // Need to do mutation
@@ -115,11 +118,15 @@ export const useActivity = ({ route, navigation, connectedDevice, setConnectedDe
         }, 
         loadCell: { 
           loadcelldata: parsedLoadCellData 
-        }
+        },
+        GPS: { 
+          GPSdata: parsedGPSData 
+        },
       });
 
       setIMUData([]);
       setLoadcellData([]);
+      setGPSData([]);
     }
   }
 
@@ -178,25 +185,34 @@ export const useActivity = ({ route, navigation, connectedDevice, setConnectedDe
 
         // Signal the Microcontroller to begin recording:
         await device.writeCharacteristicWithResponseForService(SERVICE_UUID, INPUT_UUID, base64.encode("1"));
-  
-        //Read inital values
-        await device.readCharacteristicForService(SERVICE_UUID, OUTPUT_UUID);
-        await device.readCharacteristicForService(SERVICE_UUID, LOADCELL_OUTPUT_UUID);
-        await device.readCharacteristicForService(SERVICE_UUID, IMU_OUTPUT_UUID);
-
+        
         if(Platform.OS === "ios") {
+          //Read inital values
+          await device.readCharacteristicForService(SERVICE_UUID, OUTPUT_UUID);
+          await device.readCharacteristicForService(SERVICE_UUID, LOADCELL_OUTPUT_UUID);
+          await device.readCharacteristicForService(SERVICE_UUID, IMU_OUTPUT_UUID);
+          await device.readCharacteristicForService(SERVICE_UUID, GPS_OUTPUT_UUID);
+
           // On iOS monitorCharacteristicForService only shows the data once... therefore we will use read instead
           countRef.current = setInterval(async () => {
             // Reads Data from ESP32 (from the loop function)
             const readCharacteristic = await device.readCharacteristicForService(SERVICE_UUID, OUTPUT_UUID);
             const readCharLoadcell = await device.readCharacteristicForService(SERVICE_UUID, LOADCELL_OUTPUT_UUID);
             const readCharIMU = await device.readCharacteristicForService(SERVICE_UUID, IMU_OUTPUT_UUID);
+            const readCharGPS = await device.readCharacteristicForService(SERVICE_UUID, GPS_OUTPUT_UUID);
 
             // Save data into an array
             setLoadcellData(previous => [...previous, base64.decode(readCharLoadcell?.value ?? '') ]);
             currentLoadCellData = base64.decode(readCharLoadcell?.value ?? '');
             setIMUData(previous => [...previous, base64.decode(readCharIMU?.value ?? '') ]);
-          }, 250);
+            setGPSData(previous => [...previous, base64.decode(readCharGPS?.value ?? '') ]);
+          }, 250); // Anything under 250ms takes too long to parse and save to the DB... 
+
+          // 0ms gives really accurate data but for some reasons takes a while to save in the DB even if it only ran for a couple of seconds
+          // Might be because updating the state is very slow?? Not sure?
+          
+          //** We get more data points which increases accuracy but reduces efficiency **
+
         } else {
           // Monitor values and tell what to do when receiving an update
           device.monitorCharacteristicForService(SERVICE_UUID, OUTPUT_UUID, (error, characteristic) => {
@@ -227,6 +243,15 @@ export const useActivity = ({ route, navigation, connectedDevice, setConnectedDe
             },
             "monitortransactionIMU",
           );
+
+          // Monitor for GPS data
+          device.monitorCharacteristicForService(SERVICE_UUID, GPS_OUTPUT_UUID, (error, characteristic) => {
+              if (characteristic?.value != null) {
+                setGPSData(previous => [...previous, base64.decode(characteristic?.value ?? '') ]);
+              }
+            },
+            "monitortransactionGPS",
+          );
         }
         console.log('Connection established');
         // ----------------------------------------------------------------------------------------
@@ -253,12 +278,13 @@ export const useActivity = ({ route, navigation, connectedDevice, setConnectedDe
       // Signal the microcontroller to stop recording data
       if(connectedDevice) {
         // Signal the Microcontroller to Stop Recording:
-        await connectedDevice.writeCharacteristicWithResponseForService(SERVICE_UUID, INPUT_UUID, base64.encode('0'))
+        await connectedDevice.writeCharacteristicWithoutResponseForService(SERVICE_UUID, INPUT_UUID, base64.encode('0'))
 
         // Cancel monitor transaction
         bleManager.cancelTransaction('monitortransactionOUT');
         bleManager.cancelTransaction('monitortransactionLoadcell');
         bleManager.cancelTransaction('monitortransactionIMU');
+        bleManager.cancelTransaction('monitortransactionGPS');
       }
 
       // Save remaining data to the DB

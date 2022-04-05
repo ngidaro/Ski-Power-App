@@ -12,7 +12,7 @@ export const LOADCELL = 'LOADCELL';
 export const PHONEGPS = 'PHONEGPS';
 export const IMU = 'IMU';
 export const POWER = 'POWER';
-
+export const GPS = 'GPS';
 
 export const useActivityDetails = ({ route, navigation, activity, data, isFetching, dataType } : GraphProps) => {  
 
@@ -45,18 +45,8 @@ export const useActivityDetails = ({ route, navigation, activity, data, isFetchi
             // let initTime = data.IMUdata[0].timestamp;
             let previousData: IMUData;
             data.IMUdata.forEach(val => {
-              let xAngle: number;
-              if(val.accel.y > 1) {
-                if(previousData){
-                  xAngle = Math.atan2(Number(previousData.accel.x), Number(previousData.accel.y)) / (Math.PI/180);
-                } else {
-                  xAngle = 90;
-                }
-              } else {
-                xAngle = Math.atan2(Number(val.accel.x), Number(val.accel.y)) / (Math.PI/180);
-                previousData = val;
-              }
-
+              const { xAngle, prevData } = calculateXAngle(false, val, previousData);
+              previousData = prevData;
               // const elapsedTime = (val.timestamp - initTime) / 1000;  // Get elapsed time in seconds
               // const accData = (Math.atan2(Number(val.accel.x), Number(val.accel.y)) / (Math.PI/180)) * 0.96;
               // const gyroData = val.gyro.y * elapsedTime * 0.04;
@@ -73,26 +63,41 @@ export const useActivityDetails = ({ route, navigation, activity, data, isFetchi
           const loadcelldata = data[0].loadcelldata;
           const IMUdata = data[1].IMUdata;
           const GPSdata = data[2].GPSdata;
+          let previousData: IMUData;
 
-          GPSdata.forEach(val  => {
-            const index = loadcelldata.findIndex(value => value.timestamp === val.hardwaretimestamp);
-            if(index !== -1){
-              // Index exists
+          GPSdata.forEach((val, arrIndex: number)  => {
+            // Phone GPS
+            if(GPSdata.coords) {
               // The index is the same for the loadcell and the IMU data
-
-              // xAngle is in radians
-              const xAngle = Math.atan2(Number(IMUdata[index].accel.x), Number(IMUdata[index].accel.y));
-              const force = Number(Math.abs(loadcelldata[index].weight)) * 0.00981;  // In N
-              const forceX = force * Math.cos(xAngle);
-              const speed = val.coords.speed > 0 ? Number(Math.abs(val.coords.speed)) : 0;
-              const power = forceX * speed;
-
-              setDataArray(previous => [...previous, power > 0.01 ? power : 0]);
+              const index = loadcelldata.findIndex(value => value.timestamp === val.hardwaretimestamp);
+              if(index !== -1){
+                // Index exists
+                // Check to see if the IMU accel in y is greater than 1
+                const { xAngle, prevData } = calculateXAngle(true, IMUdata[index], previousData);
+                previousData = prevData;
+                
+                let power = calculatePower(val.coords.speed, xAngle, loadcelldata[index].weight);
+                setDataArray(previous => [...previous, power > 0.01 ? power : 0]);
+              } else {
+                // Index does not exist (or did not record) so the value is 0
+                setDataArray(previous => [...previous, 0]);
+              }
             } else {
-              // Index does not exist (or did not record) so the value is 0
-              setDataArray(previous => [...previous, 0]);
+              // Hardware GPS
+              const {xAngle, prevData}  = calculateXAngle(true, IMUdata[arrIndex], previousData);
+              previousData = prevData;
+              let power = calculatePower(val.speed, xAngle, loadcelldata[arrIndex].weight);
+              setDataArray(previous => [...previous, power > 0.01 ? power : 0]);
             }
           });
+          
+          break;
+        case GPS:
+          if(data.GPSdata && (dataArray.length === 0)) {
+            data.GPSdata.forEach(val => {
+              setDataArray(previous => [...previous, val.speed >= 0 ? Number(Math.abs(val.speed)) : 0]);
+            });
+          }
           break;
         default:
           break;
@@ -106,6 +111,33 @@ export const useActivityDetails = ({ route, navigation, activity, data, isFetchi
       }
     }
   },[isFetching]);
+
+  const calculatePower = (GPSspeed: number, xAngle: number, loadcellWeight: number) => {
+    const force = Number(Math.abs(loadcellWeight)) * 0.00981;  // In N
+    const forceX = force * Math.cos(xAngle);
+    const speed = GPSspeed > 0 ? GPSspeed : 0;
+    return forceX * speed;
+  }
+
+  const calculateXAngle = (inRAD: boolean, IMUdata: IMUData, previousData: IMUData) => {
+    let xAngle: number;
+    if(IMUdata.accel.y > 1.1) {
+      if(previousData){
+        xAngle = Math.atan2(Number(previousData.accel.x), Number(previousData.accel.y));
+      } else {
+        xAngle = 90 * Math.PI/180;
+      }
+    } else {
+      xAngle = Math.atan2(Number(IMUdata.accel.x), Number(IMUdata.accel.y));
+      previousData = IMUdata;
+    }
+
+    if(inRAD) {
+      return { xAngle, previousData};
+    } else {
+      return { xAngle: (xAngle * 180/Math.PI), previousData };
+    }
+  }
 
   return {
     dataArray,

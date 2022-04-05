@@ -1,3 +1,4 @@
+import { GPSdata } from "../models/GPS";
 import { IMUData } from "../models/IMU";
 import { LoadCellData } from "../models/Loadcell";
 
@@ -51,4 +52,29 @@ export const parseLoadCellData = (data: string[]): LoadCellData[] => {
     }
   }
   return loadCellData
+}
+
+// Parse the GPS data coming from the hardware
+export const parseGPSData = (data: string[]): GPSdata[] => {
+  // Data coming in is of the form: ["speed, latitude, longitude, satellite, altitude, time"]
+  let gpsData: GPSdata[] = [];
+  const len = data.length;
+  var i = 0;
+
+  if(data) {
+    while (i < len) {
+      const tmpArr: number[] = data[i].split(',').map((val) => parseFloat(val));
+      const tmpDataObj: GPSdata = {
+        speed: tmpArr[0],
+        latitude: tmpArr[1],
+        longitude: tmpArr[2],
+        sattelite: tmpArr[3],
+        altitude: tmpArr[4],
+        timestamp: tmpArr[5],
+      }
+      gpsData.push(tmpDataObj);
+      i++;
+    }
+  }
+  return gpsData
 }

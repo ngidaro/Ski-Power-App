@@ -90,6 +90,7 @@ const PLXScanBluetooth = ({ connectedDevice, setConnectedDevice } : PLXScanBluet
         bleManager.cancelTransaction('monitortransactionOUT');
         bleManager.cancelTransaction('monitortransactionLoadcell');
         bleManager.cancelTransaction('monitortransactionIMU');
+        bleManager.cancelTransaction('monitortransactionGPS');
 
         bleManager.cancelDeviceConnection(connectedDevice.id).then(() =>
           console.log('DC completed'),
